@@ -219,12 +219,16 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
   // If account creation was successful, try to immediately log the user in
   if(formId == 'accountCreate'){
     // Take the phone and password, and use it to log the user in
+    console.log('requestPayload: ', requestPayload);
     var newPayload = {
-      'phone' : requestPayload.phone,
+      'email' : requestPayload.email,
       'password' : requestPayload.password
     };
 
-    app.client.request(undefined,'api/tokens','POST',undefined,newPayload,function(newStatusCode,newResponsePayload){
+    console.log('Sending payload: ', newPayload);
+    app.client.request(undefined,'api/auth','POST',undefined,newPayload,function(newStatusCode,newResponsePayload){
+
+      console.log('newStatusCode: ', newStatusCode);
       // Display an error on the form if needed
       if(newStatusCode !== 200){
 
@@ -235,16 +239,18 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
         document.querySelector("#"+formId+" .formError").style.display = 'block';
 
       } else {
+        console.log('Setting the response in api');
+        console.log('changing the location');
         // If successful, set the token and redirect the user
         app.setSessionToken(newResponsePayload);
-        window.location = '/checks/all';
+        window.location = '/home/menu';
       }
     });
   }
   // If login was successful, set the token in localstorage and redirect the user
   if(formId == 'sessionCreate'){
     app.setSessionToken(responsePayload);
-    window.location = '/checks/all';
+    window.location = '/home/menu';
   }
 
   // If forms saved successfully and they have success messages, show them
@@ -261,12 +267,12 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
 
   // If the user just created a new check successfully, redirect back to the dashboard
   if(formId == 'checksCreate'){
-    window.location = '/checks/all';
+    window.location = '/home/menu';
   }
 
   // If the user just deleted a check, redirect them to the dashboard
   if(formId == 'checksEdit2'){
-    window.location = '/checks/all';
+    window.location = '/home/menu';
   }
 
 };
