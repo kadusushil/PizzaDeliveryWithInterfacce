@@ -102,12 +102,15 @@ app.logUserOut = function(redirectUser){
 
   // Get the current token id
   var tokenId = typeof(app.config.sessionToken.id) == 'string' ? app.config.sessionToken.id : false;
+  var email = typeof(app.config.email) == 'string' ? app.config.email : false;
 
   // Send the current token to the tokens endpoint to delete it
   var queryStringObject = {
     'id' : tokenId
   };
-  app.client.request(undefined,'api/tokens','DELETE',queryStringObject,undefined,function(statusCode,responsePayload){
+  // const header = {'token': tokenId};
+  const payload = {'email': email}
+  app.client.request(undefined,'/api/auth','DELETE',queryStringObject,payload,function(statusCode,responsePayload){
     // Set the app.config token as false
     app.setSessionToken(false);
 
@@ -115,7 +118,6 @@ app.logUserOut = function(redirectUser){
     if(redirectUser){
       window.location = '/session/deleted';
     }
-
   });
 };
 
@@ -177,7 +179,6 @@ app.bindForms = function(){
             }
           }
         }
-
 
         // If the method is DELETE, the payload should be a queryStringObject instead
         var queryStringObject = method == 'DELETE' ? payload : {};
@@ -242,7 +243,7 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
         console.log('Setting the response in api');
         console.log('changing the location');
         // If successful, set the token and redirect the user
-        app.setSessionToken(newResponsePayload);
+        app.setSessionToken(newResponsePayload, requestPayload.email);
         window.location = '/home/menu';
       }
     });
@@ -307,10 +308,12 @@ app.setLoggedInClass = function(add){
 };
 
 // Set the session token in the app.config object as well as localstorage
-app.setSessionToken = function(token){
+app.setSessionToken = function(token, email){
   app.config.sessionToken = token;
+  app.config.email = email;
   var tokenString = JSON.stringify(token);
   localStorage.setItem('token',tokenString);
+  localStorage.setItem('email', email);
   if(typeof(token) == 'object'){
     app.setLoggedInClass(true);
   } else {
