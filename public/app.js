@@ -53,7 +53,7 @@ app.client.request = function(headers,path,method,queryStringObject,payload,call
   }
 
   // If there is a current session token set, add that as a header
-  if(app.config.sessionToken){
+  if(app.config.sessionToken.id){
     xhr.setRequestHeader("token", app.config.sessionToken.id);
   }
 
@@ -143,7 +143,6 @@ app.bindForms = function(){
           document.querySelector("#"+formId+" .formSuccess").style.display = 'none';
         }
 
-
         // Turn the inputs into a payload
         var payload = {};
         var elements = this.elements;
@@ -226,7 +225,6 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
       'password' : requestPayload.password
     };
 
-    console.log('Sending payload: ', newPayload);
     app.client.request(undefined,'api/auth','POST',undefined,newPayload,function(newStatusCode,newResponsePayload){
 
       console.log('newStatusCode: ', newStatusCode);
@@ -368,13 +366,17 @@ app.loadDataOnPage = function(){
   }
 
   // Logic for dashboard page
-  if(primaryClass == 'checksList'){
+  if(primaryClass == 'showMenu'){
     app.loadChecksListPage();
   }
 
   // Logic for check details page
   if(primaryClass == 'checksEdit'){
     app.loadChecksEditPage();
+  }
+
+  if (primaryClass == 'checkout') {
+    app.loadCheckoutPage();
   }
 };
 
@@ -410,56 +412,145 @@ app.loadAccountEditPage = function(){
   }
 };
 
+app.loadCheckoutPage = () => {
+  // loads existing order of the user.
+
+  var queryStringObject = {
+    'email' : app.config.sessionToken.email
+  };
+
+  const headers = {
+    'token' : app.config.sessionToken.token
+  };
+  app.client.request(headers,'api/cart','GET',queryStringObject,undefined,
+      function(statusCode,responsePayload) {
+        if (statusCode == 200) {
+          var menuItems = typeof(responsePayload) == 'object'
+          && responsePayload instanceof Array && responsePayload.length > 0 ? responsePayload : [];
+          var totalPrice = 0;
+          if(menuItems.length > 0){
+            menuItems.forEach((menuItem) => {
+              console.log('Order Item: ', menuItem);
+
+              var table = document.getElementById("orderListTable");
+              var tr = table.insertRow(-1);
+              tr.classList.add('checkRow');
+              var td0 = tr.insertCell(0);
+              var td1 = tr.insertCell(1);
+              var td2 = tr.insertCell(2);
+              var td3 = tr.insertCell(3);
+              var td4 = tr.insertCell(4);
+
+              td0.innerHTML = '<img width=250 height=250 src=' + menuItem.picture + '/>';
+              td1.innerHTML = '<h1>'+menuItem.title+'</h1>';
+              td2.innerHTML = menuItem.description;
+              td3.innerHTML = menuItem.quantity + '*' + menuItem.price;
+              // var state = typeof(responsePayload.state) == 'string' ? responsePayload.state : 'unknown';
+              var price = menuItem.price.replace('$','');
+              console.log('Price: ', price);
+              console.log('Quantity', menuItem.quantity);
+              td4.innerHTML = '$' + (menuItem.quantity * price);
+              totalPrice = totalPrice + (menuItem.quantity * price);
+            });
+          }
+
+          var table = document.getElementById("orderListTable");
+          var tr = table.insertRow(-1);
+          tr.classList.add('checkRow');
+          var td0 = tr.insertCell(0);
+          var td1 = tr.insertCell(1);
+          var td2 = tr.insertCell(2);
+          var td3 = tr.insertCell(3);
+          var td4 = tr.insertCell(4);
+
+
+          td2.innerHTML = "Total";
+          td3.innerHTML = totalPrice;
+        } else {
+          console.log('You have no orders');
+        }
+      });
+};
+
 // Load the dashboard page specifically
 app.loadChecksListPage = function(){
   // Get the phone number from the current token, or log the user out if none is there
-  var phone = typeof(app.config.sessionToken.phone) == 'string' ? app.config.sessionToken.phone : false;
-  if(phone){
+  // var phone = typeof(app.config.sessionToken.email) == 'string' ? app.config.sessionToken.email : false;
+  // if(phone){
     // Fetch the user data
     var queryStringObject = {
-      'phone' : phone
+      'email' : app.config.sessionToken.email
     };
-    app.client.request(undefined,'api/users','GET',queryStringObject,undefined,function(statusCode,responsePayload){
+
+    const headers = {
+      'token' : app.config.sessionToken.token
+    };
+    app.client.request(headers,'api/menu','GET',queryStringObject,undefined,
+                        function(statusCode,responsePayload) {
       if(statusCode == 200){
 
+        console.log('responsePayload: ', responsePayload);
         // Determine how many checks the user has
-        var allChecks = typeof(responsePayload.checks) == 'object' && responsePayload.checks instanceof Array && responsePayload.checks.length > 0 ? responsePayload.checks : [];
-        if(allChecks.length > 0){
+        var menuItems = typeof(responsePayload) == 'object'
+        && responsePayload instanceof Array && responsePayload.length > 0 ? responsePayload : [];
+        if(menuItems.length > 0){
 
+          document.getElementById("createCheckCTA").style.display = 'block';
           // Show each created check as a new row in the table
-          allChecks.forEach(function(checkId){
+          menuItems.forEach(function(data){
             // Get the data for the check
-            var newQueryStringObject = {
-              'id' : checkId
-            };
-            app.client.request(undefined,'api/checks','GET',newQueryStringObject,undefined,function(statusCode,responsePayload){
-              if(statusCode == 200){
-                var checkData = responsePayload;
-                // Make the check data into a table row
-                var table = document.getElementById("checksListTable");
-                var tr = table.insertRow(-1);
-                tr.classList.add('checkRow');
-                var td0 = tr.insertCell(0);
-                var td1 = tr.insertCell(1);
-                var td2 = tr.insertCell(2);
-                var td3 = tr.insertCell(3);
-                var td4 = tr.insertCell(4);
-                td0.innerHTML = responsePayload.method.toUpperCase();
-                td1.innerHTML = responsePayload.protocol+'://';
-                td2.innerHTML = responsePayload.url;
-                var state = typeof(responsePayload.state) == 'string' ? responsePayload.state : 'unknown';
-                td3.innerHTML = state;
-                td4.innerHTML = '<a href="/checks/edit?id='+responsePayload.id+'">View / Edit / Delete</a>';
-              } else {
-                console.log("Error trying to load check ID: ",checkId);
-              }
-            });
-          });
+            var table = document.getElementById("checksListTable");
+            var tr = table.insertRow(-1);
+            tr.classList.add('checkRow');
+            var td0 = tr.insertCell(0);
+            var td1 = tr.insertCell(1);
+            var td2 = tr.insertCell(2);
+            var td3 = tr.insertCell(3);
+            var td4 = tr.insertCell(4);
 
-          if(allChecks.length < 5){
-            // Show the createCheck CTA
-            document.getElementById("createCheckCTA").style.display = 'block';
-          }
+            td0.innerHTML = '<img width=250 height=250 src=' + data.picture + '/>';
+            td1.innerHTML = '<h1>'+data.title+'</h1>';
+            td2.innerHTML = data.description;
+            td3.innerHTML = data.price;
+            // var state = typeof(responsePayload.state) == 'string' ? responsePayload.state : 'unknown';
+            td4.innerHTML = '<a>Add To Cart</a>';
+
+            td4.setAttribute('id', data.id);
+            document.getElementById(data.id).addEventListener("click", function() {
+              console.log('This is testing');
+
+              const itemId = this.id;
+              var newPayload = {
+                                'id' : itemId,
+                                'quantity' : 1
+                              };
+              app.client.request(headers,'api/cart','POST',queryStringObject, newPayload,
+                    function(statusCode,responsePayload) {
+                      if (statusCode == 200) {
+                        console.log('Successfully Added');
+
+                      } else {
+                        console.log('Not added');
+                      }
+                    });
+
+
+            });
+            // td4.addEventListener("click", function(){
+            //
+            //   // Log the user out
+            //   console.log('Clicked on event');
+            //
+            //   // Stop it from redirecting anywhere
+            //   // e.preventDefault();
+            //
+            // });
+          });
+          //
+          // if(allChecks.length < 5){
+          //   // Show the createCheck CTA
+          //   document.getElementById("createCheckCTA").style.display = 'block';
+          // }
 
         } else {
           // Show 'you have no checks' message
@@ -471,12 +562,12 @@ app.loadChecksListPage = function(){
         }
       } else {
         // If the request comes back as something other than 200, log the user our (on the assumption that the api is temporarily down or the users token is bad)
-        app.logUserOut();
+        // app.logUserOut();
       }
     });
-  } else {
-    app.logUserOut();
-  }
+  // } else {
+  //   app.logUserOut();
+  // }
 };
 
 
@@ -529,7 +620,7 @@ app.tokenRenewalLoop = function(){
         console.log("Token renewed successfully @ "+Date.now());
       }
     });
-  },1000 * 60);
+  },1000 * 60 * 60);
 };
 
 // Init (bootstrapping)
