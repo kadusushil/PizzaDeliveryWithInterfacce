@@ -376,6 +376,7 @@ app.loadDataOnPage = function(){
   }
 
   if (primaryClass == 'checkout') {
+    app.initCard();
     app.loadCheckoutPage();
   }
 };
@@ -528,7 +529,7 @@ app.loadChecksListPage = function(){
                     function(statusCode,responsePayload) {
                       if (statusCode == 200) {
                         console.log('Successfully Added');
-
+                        app.showSnackbar();
                       } else {
                         console.log('Not added');
                       }
@@ -623,6 +624,92 @@ app.tokenRenewalLoop = function(){
   },1000 * 60 * 60);
 };
 
+app.initCard = () => {
+  // Create a Stripe client.
+var stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
+
+// Create an instance of Elements.
+var elements = stripe.elements();
+
+// Custom styling can be passed to options when creating an Element.
+// (Note that this demo uses a wider set of styles than the guide below.)
+var style = {
+  base: {
+    color: '#32325d',
+    lineHeight: '18px',
+    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+    fontSmoothing: 'antialiased',
+    fontSize: '16px',
+    '::placeholder': {
+      color: '#aab7c4'
+    }
+  },
+  invalid: {
+    color: '#fa755a',
+    iconColor: '#fa755a'
+  }
+};
+
+// Create an instance of the card Element.
+var card = elements.create('card', {style: style});
+
+// Add an instance of the card Element into the `card-element` <div>.
+card.mount('#card-element');
+
+// Handle real-time validation errors from the card Element.
+card.addEventListener('change', function(event) {
+  var displayError = document.getElementById('card-errors');
+  if (event.error) {
+    displayError.textContent = event.error.message;
+  } else {
+    displayError.textContent = '';
+  }
+});
+
+// Handle form submission.
+var form = document.getElementById('payment-form');
+form.addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  stripe.createToken(card).then(function(result) {
+    if (result.error) {
+      // Inform the user if there was an error.
+      var errorElement = document.getElementById('card-errors');
+      errorElement.textContent = result.error.message;
+    } else {
+      // Send the token to your server.
+      app.stripeTokenHandler(result.token);
+    }
+  });
+});
+};
+
+app.stripeTokenHandler = (token) => {
+  console.log('Token: token', token.id);
+  var queryStringObject = {
+    'email' : app.config.sessionToken.email
+  };
+
+  const headers = {
+    'token' : app.config.sessionToken.token
+  };
+
+  const payload = {
+    'stripeToken' : token.id
+  }
+  app.client.request(headers,'api/checkout','POST',queryStringObject,payload,
+                      function(statusCode,responsePayload) {
+    if(statusCode == 200){
+      console.log('Order is done');
+      window.location = 'account/thank_you';
+      // app.client.request(undefined,'account/thank_you','GET',undefined,undefined,undefined);
+    } else {
+
+    }
+  });
+
+}
+
 // Init (bootstrapping)
 app.init = function(){
 
@@ -642,6 +729,17 @@ app.init = function(){
   app.loadDataOnPage();
 
 };
+
+app.showSnackbar = () => {
+    // Get the snackbar DIV
+    var x = document.getElementById("snackbar");
+
+    // Add the "show" class to DIV
+    x.className = "show";
+
+    // After 3 seconds, remove the show class from DIV
+    setTimeout(function(){ x.className = x.className.replace("show", "Added to cart"); }, 3000);
+  }
 
 // Call the init processes after the window loads
 window.onload = function(){

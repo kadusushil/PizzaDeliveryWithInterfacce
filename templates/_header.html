@@ -14,7 +14,7 @@
     <link type="image/x-icon" rel="icon" href="favicon.ico">
     <script type="text/javascript" charset="utf-8" src="public/app.js"></script>
     <link rel="stylesheet" type="text/css" href="public/app.css" />
-
+    <script src="https://js.stripe.com/v3/"></script>
   </head>
   <body class="{body.class}">
     <!-- Page Wrapper -->
@@ -37,11 +37,9 @@
             <a href="/session/create">Login</a>
           </li>
           <li class="loggedIn">
-            <a href="/checks/all">Dashboard</a>
+            <a href="/home/menu">Pizza Menu</a>
           </li>
-          <li class="loggedIn">
-            <a href="/account/edit">Account Settings</a>
-          </li>
+
           <li class="loggedIn">
             <a href="#" id="logoutButton">Logout</a>
           </li>
