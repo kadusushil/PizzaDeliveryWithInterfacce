@@ -1,6 +1,6 @@
-# Homework Assignment #2
+# Homework Assignment #3
 
-This project has codebase for assignment #2.
+This project has codebase for assignment #3.
 
 # How to run
 Before you run the project, we need to set environment variables for Mailgun and
@@ -34,7 +34,7 @@ It offers following services.
 
 ## Create new user
 * Method: POST
-* Endpoint: http://localhost:8000/user
+* Endpoint: http://localhost:8000/api/user
 * Headers: None
 * Body: It should have following mandatory fields
 email, phone, password, countryCode, streetAddress, pinCode
@@ -56,7 +56,7 @@ Following is sample Body
 
 ## Delete user
 * Method: DELETE
-* Endpoint: http://localhost:8000/user?email=valid@email.com
+* Endpoint: http://localhost:8000/api/user?email=valid@email.com
 * Headers: token
 * Body:
       email
@@ -68,7 +68,7 @@ Sample response
 
 ## Login
 * Method: POST
-* Endpoint: http://localhost:8000/auth
+* Endpoint: http://localhost:8000/api/auth
 * Headers: None
 * Body:
      email, password
@@ -92,12 +92,12 @@ Expiry for staging is 24 hours and production is one hour.
 
 ## Get user data
 * Method: GET
-* Endpoint: http://localhost:8000/user
+* Endpoint: http://localhost:8000/api/user
 * Headers: token (token received after user login)
 * QueryString: email=validEmail@OfTheUser.com
 * Body: None
 
-Sample URL: http://localhost:8000/user?email=validEmail@OfTheUser.com
+Sample URL: http://localhost:8000/api/user?email=validEmail@OfTheUser.com
 
 Response:
 ```
@@ -120,7 +120,7 @@ Response:
 
 ## Update user data
 * Method: PUT
-* Endpoint: http://localhost:8000/user
+* Endpoint: http://localhost:8000/api/user
 * Headers: token (token received after login)
 * QueryString : email=validEmail@OfTheUser.com
 * Body:
@@ -132,7 +132,7 @@ email and other fields which you want to update.
 is mandatory.
 
 Sample URL:
-http://localhost:8000/user?email=validEmail@OfTheUser.com
+http://localhost:8000/api/user?email=validEmail@OfTheUser.com
 
 Sample Response:
 ```
@@ -157,7 +157,7 @@ You will get whole response with update data.
 
 ## Delete user account
 * Method: DELETE
-* Endpoint: http://localhost:8000/user
+* Endpoint: http://localhost:8000/api/user
 * Headers: token (valid token obtained after user login)
 * QueryString: email=validEmail@OfTheUser.com
 * Body: email=validEmail@OfTheUser.com
@@ -172,7 +172,7 @@ Sample Response:
 
 ## Get pizza menu
 * Method: GET
-* Endpoint: http://localhost:8000/menu
+* Endpoint: http://localhost:8000/api/menu
 * Headers: token (valid token)
 
 Sample Response:
@@ -199,7 +199,7 @@ Sample Response:
 
 ## Add item/items to cart
 * Method: POST
-* Endpoint: http://localhost:8000/cart
+* Endpoint: http://localhost:8000/account/cart
 * Headers: token
 * QueryString: email
 * Body: Array with itemid and quantity. Please see sample data below.
@@ -237,7 +237,7 @@ found in cart then it's count is incremented otherwise it is added to the cart.
 
 ## Get current cart
 * Method: GET
-* Endpoint: http://localhost:8000/cart?email=validEmailAddress@test.com
+* Endpoint: http://localhost:8000/account/cart?email=validEmailAddress@test.com
 * Headers: token
 * QueryString: email
 * Body: Array with itemid and quantity. Please see sample data below.
@@ -246,7 +246,7 @@ The response would be similar one mentioned above in add cart(POST)
 
 ## Delete the cart
 * Method: DELETE
-* Endpoint: http://localhost:8000/cart?email=validEmailAddress@test.com
+* Endpoint: http://localhost:8000/account/cart?email=validEmailAddress@test.com
 * Headers: token
 * QueryString: email
 * Body: email
@@ -254,7 +254,7 @@ You can pass email in either queryString or as a part of body
 
 ## Checkout the cart
 * Method: POST
-* Endpoint: http://localhost:8000/checkout
+* Endpoint: http://localhost:8000/account/checkout
 * Headers: token
 * QueryString: email (email=valid@email.com)
 * Body: stripeToken and email (email can be sent as part of queryString also)
@@ -272,7 +272,7 @@ Sample Response:
 
 ## Order History
 * Method: POST
-* Endpoint: http://localhost:8000/history
+* Endpoint: http://localhost:8000/api/history
 * Headers : token
 * Body : email and orderId
 
